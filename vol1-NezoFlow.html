@@ -3,324 +3,668 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nezo Flow</title>
+    <title>Nezo Flow 🚀 - Ultimate Workspace</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'] 
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+                        'card': '0 2px 5px rgba(0,0,0,0.05)',
+                        'dock': '0 20px 40px rgba(0,0,0,0.4)',
+                        'neon': '0 0 10px #00ff00',
+                    },
+                    animation: {
+                        'blink': 'blink 1s step-end infinite',
+                    },
+                    keyframes: {
+                        blink: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        /* --- UTILITIES & VISUALS --- */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            /* Background Image similar to reference (Green Mountains) */
+            background-image: url('https://images.unsplash.com/photo-1472214103451-9374bd1c798e?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
         
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 12px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.3); }
-
-        /* Dragging Visuals */
-        .dragging { opacity: 0.6; transform: rotate(2deg) scale(0.98); cursor: grabbing; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-        .kanban-column { min-height: 100px; }
-
-        /* Glassmorphism & Colors */
-        .glass-panel { background: rgba(245, 247, 250, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.4); }
-        .glass-header { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(255,255,255,0.2); }
-        
-        /* Sky Gradient Background */
-        .bg-sky-gradient {
-            background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
-            /* Alternative fallback or animation could go here */
+        /* Glassmorphism Window */
+        .app-window {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
 
-        /* Dropdown Animation */
-        .dropdown-menu {
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            transform-origin: top right;
-            transform: scale(0.95) translateY(-10px);
+        /* Scrollbar Styling */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
+
+        /* Drag & Drop Classes */
+        .draggable { cursor: grab; }
+        .draggable.dragging { 
+            opacity: 0.5; 
+            transform: scale(0.98) rotate(2deg);
+            cursor: grabbing;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            z-index: 50;
+        }
+
+        /* macOS Dock Animation */
+        .dock-icon {
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .dock-icon:hover {
+            transform: scale(1.2) translateY(-10px);
+        }
+
+        /* Navbar Active State */
+        .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #1e3a8a; /* Blue-900 */
+            border-bottom: 3px solid #2563eb; /* Blue-600 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .nav-item {
+            transition: all 0.2s ease;
+        }
+
+        /* Dropdown Menu */
+        .profile-dropdown {
             opacity: 0;
-            pointer-events: none;
             visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
         }
-        .dropdown-menu.active {
-            transform: scale(1) translateY(0);
+        .profile-dropdown.show {
             opacity: 1;
-            pointer-events: auto;
             visibility: visible;
+            transform: translateY(0);
         }
-
-        /* Modal Backdrop */
-        .modal-backdrop {
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(2px);
+        
+        /* Radio Button Logic for Add Form */
+        .radio-role:checked + div {
+            border-color: currentColor;
+            background-color: var(--bg-color);
+            color: var(--text-color);
         }
     </style>
 </head>
-<body class="h-screen w-screen overflow-hidden bg-sky-gradient text-slate-700 select-none">
+<body class="h-screen w-screen overflow-hidden text-slate-700 select-none flex flex-col items-center justify-center p-4 relative">
 
-    <!-- HIDDEN INPUTS -->
-    <input type="file" id="profile-upload-input" class="hidden" accept="image/*">
-    <input type="file" id="card-image-input" class="hidden" accept="image/*">
-
-    <!-- Top Navigation -->
-    <nav class="flex items-center justify-between px-4 py-2 bg-white/10 text-slate-800 h-14 relative z-50 border-b border-white/20">
-        <div class="flex items-center gap-6">
-            <div class="font-bold text-xl flex items-center gap-2 cursor-pointer text-blue-700 tracking-tight">
-                <i class="fa-solid fa-layer-group"></i> ZenithFlow
-            </div>
-            <div class="hidden md:flex gap-2 text-sm font-medium text-slate-600">
-                <div class="relative">
-                    <button id="btn-workspaces" class="hover:bg-white/40 px-3 py-1.5 rounded transition flex items-center gap-1">
-                        Workspaces <i class="fa-solid fa-angle-down text-xs opacity-70"></i>
-                    </button>
-                    <!-- Workspace Dropdown -->
-                    <div id="dropdown-workspaces" class="dropdown-menu absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-xl ring-1 ring-black/5 p-2 z-50">
-                        <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Your Workspaces</div>
-                        <div id="workspace-list">
-                            <div class="p-2 hover:bg-blue-50 rounded-lg cursor-pointer flex items-center gap-3 group">
-                                <div class="w-8 h-8 rounded bg-gradient-to-br from-blue-500 to-cyan-400 text-white flex items-center justify-center font-bold text-xs">A</div>
-                                <div>
-                                    <div class="font-bold text-sm text-gray-800">Airbnb Project</div>
-                                    <div class="text-xs text-gray-500">Free Workspace</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="h-[1px] bg-gray-100 my-2"></div>
-                        <button id="btn-create-workspace" class="w-full text-left p-2 hover:bg-gray-100 rounded-lg text-sm text-gray-600 flex items-center gap-2">
-                            <i class="fa-solid fa-plus"></i> Create Workspace
-                        </button>
-                    </div>
+    <!-- MAIN APP WINDOW (macOS Style) -->
+    <div class="app-window w-full h-full max-w-[1600px] max-h-[95vh] rounded-2xl flex flex-col relative overflow-hidden animate-[fadeIn_0.3s_ease-out]">
+        
+        <!-- 1. WINDOW HEADER (Traffic Lights & Breadcrumbs) -->
+        <div class="px-5 py-3 flex items-center justify-between shrink-0 bg-white/40 border-b border-white/30">
+            <div class="flex items-center gap-6">
+                <!-- Traffic Lights -->
+                <div class="flex gap-2">
+                    <div class="w-3 h-3 rounded-full bg-[#FF5F57] border border-[#E0443E]"></div>
+                    <div class="w-3 h-3 rounded-full bg-[#FEBC2E] border border-[#D89E24]"></div>
+                    <div class="w-3 h-3 rounded-full bg-[#28C840] border border-[#1AAB29]"></div>
                 </div>
-                <a href="#" class="hover:bg-white/40 px-3 py-1.5 rounded transition">Recent</a>
-                <a href="#" class="hover:bg-white/40 px-3 py-1.5 rounded transition">Starred</a>
-            </div>
-        </div>
-        <div class="flex items-center gap-3">
-            <div class="relative hidden sm:block group">
-                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2 text-slate-500 text-xs transition group-focus-within:text-blue-600"></i>
-                <input type="text" placeholder="Search..." class="bg-white/40 border border-white/30 rounded-full px-9 py-1.5 text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-200 focus:w-64 w-48 transition-all placeholder-slate-500">
+                <!-- Breadcrumb -->
+                <div class="flex items-center text-sm font-medium text-slate-600 gap-2">
+                    <i class="fa-solid fa-rocket text-blue-600"></i>
+                    <span class="font-bold text-slate-800">Nezo Flow 🚀</span>
+                    <i class="fa-solid fa-chevron-right text-[10px] opacity-50"></i>
+                    <span class="font-semibold text-slate-600">Matrix Workspace</span>
+                </div>
             </div>
             
-            <!-- Profile Avatar -->
-            <div class="relative">
-                <button id="btn-profile" class="w-9 h-9 rounded-full overflow-hidden border-2 border-white shadow-sm hover:shadow-md transition bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
-                    <span id="profile-initials">SR</span>
-                    <img id="profile-img-display" src="" class="w-full h-full object-cover hidden">
+            <!-- Right Controls & Profile -->
+            <div class="flex items-center gap-4 relative">
+                <i class="fa-solid fa-magnifying-glass text-slate-500 cursor-pointer hover:text-slate-800"></i>
+                <button class="bg-white/80 hover:bg-white px-3 py-1 rounded text-xs font-semibold shadow-sm transition flex items-center gap-1">
+                    <i class="fa-solid fa-plus"></i> Create
                 </button>
                 
-                <!-- Profile Dropdown -->
-                <div id="dropdown-profile" class="dropdown-menu absolute top-full right-0 mt-3 w-64 bg-white rounded-xl shadow-xl ring-1 ring-black/5 text-slate-700 py-2 z-50">
-                    <div class="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
-                        <div class="text-sm font-bold text-gray-900">Skala Rinzani</div>
-                        <div class="text-xs text-gray-500">skala@nezoflow.tech</div>
-                    </div>
-                    <div class="py-1">
-                        <button id="menu-change-photo" class="w-full text-left px-4 py-2 text-sm hover:bg-blue-50 text-blue-600 font-medium">
-                            Change Profile Photo
-                        </button>
-                        <button id="menu-profile" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">Profile and Visibility</button>
-                        <button id="menu-activity" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">Activity</button>
-                        <button id="menu-settings" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">Settings</button>
-                    </div>
-                    <div class="h-[1px] bg-gray-100 my-1"></div>
-                    <button class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Log out</button>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Board Header -->
-    <div class="glass-header px-6 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div class="flex items-center gap-4">
-            <h1 class="text-2xl font-bold text-slate-800 drop-shadow-sm cursor-text hover:bg-white/20 px-2 rounded -ml-2 transition">Skala Rinzani Project</h1>
-            <button class="text-slate-500 hover:text-yellow-500 transition"><i class="fa-regular fa-star"></i></button>
-            <div class="h-6 w-[1px] bg-slate-300"></div>
-            <button class="flex items-center gap-2 bg-white/40 hover:bg-white/60 px-3 py-1.5 rounded text-sm text-slate-700 font-medium transition shadow-sm">
-                <i class="fa-solid fa-users"></i> <span>Team Visible</span>
-            </button>
-        </div>
-        
-        <div class="flex items-center gap-3">
-            <div class="flex -space-x-2">
-                <img src="https://i.pravatar.cc/150?u=1" class="w-8 h-8 rounded-full border-2 border-white shadow-sm" title="Member 1">
-                <img src="https://i.pravatar.cc/150?u=2" class="w-8 h-8 rounded-full border-2 border-white shadow-sm" title="Member 2">
-                <img src="https://i.pravatar.cc/150?u=3" class="w-8 h-8 rounded-full border-2 border-white shadow-sm" title="Member 3">
-                <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold border-2 border-white shadow-sm cursor-pointer">+5</div>
-            </div>
-            <button class="bg-white/50 hover:bg-white text-slate-700 px-3 py-1.5 rounded text-sm font-medium transition shadow-sm">Filter</button>
-            <button class="bg-blue-600 hover:bg-blue-700 text-white w-8 h-8 rounded flex items-center justify-center transition shadow-md shadow-blue-500/30">
-                <i class="fa-solid fa-user-plus text-xs"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- Canvas -->
-    <main class="flex-1 overflow-x-auto overflow-y-hidden h-[calc(100vh-120px)] p-6">
-        <div class="flex items-start gap-6 h-full w-max" id="board-container">
-            
-            <!-- COLUMN: TO DO -->
-            <div class="w-[300px] flex-shrink-0 flex flex-col max-h-full glass-panel rounded-xl shadow-lg">
-                <div class="p-3 pl-4 flex items-center justify-between cursor-grab active:cursor-grabbing">
-                    <h2 class="font-bold text-slate-700 text-sm">To Do</h2>
-                    <div class="flex items-center gap-2">
-                         <span class="card-count text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-bold">3</span>
-                        <i class="fa-solid fa-ellipsis hover:bg-slate-200 p-1.5 rounded text-slate-400 cursor-pointer transition"></i>
-                    </div>
-                </div>
-                <div class="flex-1 overflow-y-auto px-3 pb-2 custom-scrollbar space-y-3 kanban-column" id="col-todo">
+                <!-- Profile Container -->
+                <div class="relative">
+                    <img src="https://i.pravatar.cc/150?u=skala" class="w-8 h-8 rounded-full border border-white shadow-sm cursor-pointer hover:ring-2 hover:ring-blue-400 transition user-avatar-global" id="header-avatar" onclick="toggleProfileMenu()">
                     
-                    <!-- Card with Image -->
-                    <div class="bg-white p-0 rounded-lg shadow-sm border border-slate-100 hover:border-blue-400 hover:shadow-md cursor-pointer transition group draggable overflow-hidden" draggable="true">
-                        <div class="h-32 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=1000&auto=format&fit=crop');"></div>
-                        <div class="p-3">
-                            <div class="flex gap-2 mb-2"><span class="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded border border-blue-100">Design</span></div>
-                            <p class="text-slate-800 text-sm font-medium leading-snug mb-2">Editorial Calendar Assets</p>
+                    <!-- Profile Dropdown -->
+                    <div id="profile-menu" class="profile-dropdown absolute right-0 top-10 w-48 bg-white rounded-lg shadow-xl border border-gray-100 z-50 overflow-hidden">
+                        <div class="px-4 py-3 border-b border-gray-100 bg-gray-50">
+                            <p class="text-sm font-bold text-gray-800">Skala Rinzani</p>
+                            <p class="text-xs text-gray-500">Project Manager</p>
                         </div>
-                    </div>
-
-                    <div class="bg-white p-3 rounded-lg shadow-sm border border-slate-100 hover:border-blue-400 hover:shadow-md cursor-pointer transition group draggable" draggable="true">
-                        <p class="text-slate-800 text-sm font-medium leading-snug mb-3">Research competitors</p>
-                        <div class="flex items-center justify-between text-gray-400 text-xs">
-                            <div class="flex items-center gap-3"><span class="flex items-center gap-1"><i class="fa-solid fa-bars-staggered"></i></span></div>
-                            <div class="w-5 h-5 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 text-white flex items-center justify-center text-[9px] font-bold">SR</div>
-                        </div>
-                    </div>
-
-                </div>
-                <!-- Footer (Add Card) -->
-                <div class="p-3">
-                    <div class="add-card-form hidden flex-col gap-2 bg-white p-2 rounded-lg shadow-sm border border-blue-200">
-                        <div id="image-preview-area" class="hidden mb-1 relative group">
-                            <img src="" class="w-full h-24 object-cover rounded-md">
-                            <button class="absolute top-1 right-1 bg-black/50 hover:bg-black/70 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs" onclick="removeTempImage(this)"><i class="fa-solid fa-times"></i></button>
-                        </div>
-                        <textarea class="w-full text-sm resize-none outline-none text-slate-700 placeholder:text-slate-400" rows="2" placeholder="Enter a title..."></textarea>
-                        <div class="flex items-center justify-between mt-1">
-                            <div class="flex items-center gap-2">
-                                <button class="btn-confirm-add bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-semibold hover:bg-blue-700 transition shadow-sm">Add Card</button>
-                                <button class="btn-cancel-add text-slate-500 hover:text-slate-700"><i class="fa-solid fa-xmark fa-lg"></i></button>
-                            </div>
-                            <button class="btn-attach-image text-slate-400 hover:text-blue-500 transition px-2" title="Attach Image">
-                                <i class="fa-regular fa-image fa-lg"></i>
+                        <div class="p-1">
+                            <button onclick="triggerProfileUpload()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded flex items-center gap-2 transition">
+                                <i class="fa-regular fa-image"></i> Change Photo
+                            </button>
+                            <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded flex items-center gap-2 transition">
+                                <i class="fa-solid fa-gear"></i> Settings
                             </button>
                         </div>
                     </div>
-                    <button class="btn-show-add w-full flex items-center gap-2 text-slate-600 hover:bg-black/5 hover:text-slate-800 p-2 rounded-lg text-sm transition font-medium">
-                        <i class="fa-solid fa-plus"></i> Add a card
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. APP NAVIGATION TABS (Gradient Blue-White) -->
+        <div class="bg-gradient-to-r from-blue-700 via-blue-500 to-white/50 text-white flex items-end px-2 pt-2 gap-1 h-12 shrink-0 shadow-md">
+            <!-- Nav Items -->
+            <div class="nav-item active px-6 py-2 rounded-t-lg font-semibold text-sm shadow-sm flex items-center gap-2 cursor-pointer relative top-[1px]" onclick="setActiveTab(this)">
+                <i class="fa-solid fa-star text-yellow-400 text-xs"></i> Design process
+            </div>
+            <div class="nav-item px-6 py-2 bg-white/20 hover:bg-white/40 text-white rounded-t-lg font-medium text-sm cursor-pointer transition flex items-center gap-2" onclick="setActiveTab(this)">
+                <i class="fa-solid fa-code text-xs"></i> Development
+            </div>
+            <div class="nav-item px-6 py-2 bg-white/20 hover:bg-white/40 text-white rounded-t-lg font-medium text-sm cursor-pointer transition flex items-center gap-2" onclick="setActiveTab(this)">
+                <i class="fa-solid fa-rocket text-xs"></i> Release
+            </div>
+            <div class="nav-item px-6 py-2 bg-white/20 hover:bg-white/40 text-white rounded-t-lg font-medium text-sm cursor-pointer transition flex items-center gap-2" onclick="setActiveTab(this)">
+                <i class="fa-solid fa-flag text-xs"></i> Team Goal
+            </div>
+            
+            <div class="ml-auto flex items-center gap-3 px-4 pb-2 text-white/90">
+                <i class="fa-brands fa-twitch hover:text-white cursor-pointer hover:scale-110 transition"></i>
+                <i class="fa-solid fa-filter hover:text-white cursor-pointer hover:scale-110 transition"></i>
+            </div>
+        </div>
+
+        <!-- 3. SECONDARY HEADER (Board Info) -->
+        <div class="bg-white/50 backdrop-blur-md border-b border-white/40 px-6 py-3 text-slate-700 flex justify-between items-center shadow-sm shrink-0 z-10">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold flex items-center gap-2 text-slate-800">
+                    <i class="fa-solid fa-rocket text-blue-600"></i> Nezo Flow 
+                </h1>
+                <div class="w-[1px] h-5 bg-slate-300"></div>
+                <div class="flex items-center gap-2 text-sm bg-white/60 px-3 py-1 rounded hover:bg-white cursor-pointer transition shadow-sm border border-transparent hover:border-blue-200">
+                    <i class="fa-solid fa-chart-simple text-blue-600"></i> Board
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                 <div class="flex -space-x-2 mr-2">
+                    <img src="https://i.pravatar.cc/150?u=1" class="w-8 h-8 rounded-full border-2 border-white">
+                    <img src="https://i.pravatar.cc/150?u=2" class="w-8 h-8 rounded-full border-2 border-white">
+                    <img src="https://i.pravatar.cc/150?u=3" class="w-8 h-8 rounded-full border-2 border-white">
+                    <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center border-2 border-white">+9</div>
+                </div>
+                <button class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm font-bold shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition">
+                    <i class="fa-solid fa-user-plus mr-1"></i> Share
+                </button>
+            </div>
+        </div>
+
+        <!-- 4. KANBAN BOARD AREA -->
+        <main class="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-transparent">
+            <div class="flex items-start gap-5 h-full w-max" id="board-container">
+                
+                <!-- COLUMN: TO DO -->
+                <div class="w-[280px] flex flex-col max-h-full rounded-xl bg-[#f4f5f7]/95 backdrop-blur shadow-xl shrink-0 border border-white/60">
+                    <div class="p-3 pl-4 font-bold text-slate-700 text-sm flex justify-between items-center">
+                        <span>To Do</span>
+                        <i class="fa-solid fa-ellipsis hover:bg-gray-200 p-1 rounded cursor-pointer transition"></i>
+                    </div>
+                    <!-- Card List -->
+                    <div class="flex-1 overflow-y-auto px-2 pb-2 custom-scrollbar space-y-2 kanban-column" id="col-todo">
+                        
+                        <!-- Card 1 -->
+                        <div class="bg-white p-3 rounded-lg shadow-card border-b border-gray-100 cursor-grab hover:bg-blue-50/50 group draggable relative border border-transparent hover:border-blue-300 transition-all duration-200" draggable="true">
+                            <div class="flex gap-2 mb-2">
+                                <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded">Design</span>
+                            </div>
+                            <p class="text-sm font-semibold text-slate-800 mb-3">Structure editorial calendar</p>
+                            <div class="flex justify-between items-center">
+                                <div class="text-gray-400 text-xs flex gap-3">
+                                    <span><i class="fa-solid fa-paperclip"></i> 2</span>
+                                    <span><i class="fa-regular fa-comment"></i> 8</span>
+                                </div>
+                                <div class="flex -space-x-1">
+                                    <img src="https://i.pravatar.cc/150?u=8" class="w-5 h-5 rounded-full ring-1 ring-white">
+                                    <img src="https://i.pravatar.cc/150?u=9" class="w-5 h-5 rounded-full ring-1 ring-white">
+                                </div>
+                            </div>
+                            <button class="absolute top-2 right-2 text-gray-400 hover:text-blue-600 hidden group-hover:block transition"><i class="fa-solid fa-pen text-xs"></i></button>
+                        </div>
+
+                        <!-- Card 2 (With Image) -->
+                        <div class="bg-white p-3 rounded-lg shadow-card border-b border-gray-100 cursor-grab hover:bg-blue-50/50 group draggable relative border border-transparent hover:border-blue-300 transition-all duration-200" draggable="true">
+                            <div class="flex gap-2 mb-2">
+                                <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded">Copywriting</span>
+                                <span class="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded">Urgent</span>
+                            </div>
+                            <div class="h-28 bg-white rounded border border-gray-100 mb-2 flex items-center justify-center relative overflow-hidden p-2">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gmail_icon_%282020%29.svg/2560px-Gmail_icon_%282020%29.svg.png" class="w-full h-full object-contain">
+                            </div>
+                            <p class="text-sm font-semibold text-slate-800 mb-2">Create offer notification email</p>
+                            <div class="flex items-center gap-2 text-xs text-red-500 font-medium mb-2 bg-red-50 p-1 rounded w-max">
+                                <i class="fa-regular fa-clock"></i> Dec 18
+                            </div>
+                             <div class="flex justify-between items-center">
+                                <div class="text-gray-400 text-xs flex gap-3">
+                                    <span><i class="fa-solid fa-paperclip"></i> 3</span>
+                                    <span><i class="fa-solid fa-check-square"></i> 5/9</span>
+                                </div>
+                                <div class="flex -space-x-1">
+                                    <img src="https://i.pravatar.cc/150?u=10" class="w-5 h-5 rounded-full ring-1 ring-white">
+                                    <img src="https://i.pravatar.cc/150?u=11" class="w-5 h-5 rounded-full ring-1 ring-white">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 3 -->
+                        <div class="bg-white p-3 rounded-lg shadow-card border-b border-gray-100 cursor-grab hover:bg-blue-50/50 group draggable relative border border-transparent hover:border-blue-300 transition-all duration-200" draggable="true">
+                            <div class="flex gap-2 mb-2">
+                                <span class="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded">Urgent</span>
+                            </div>
+                            <p class="text-sm font-semibold text-slate-800 mb-3">Fix payment gateway bug on mobile</p>
+                            <div class="flex justify-between items-center">
+                                <div class="text-gray-400 text-xs flex gap-3">
+                                    <span><i class="fa-solid fa-triangle-exclamation"></i> High Priority</span>
+                                </div>
+                                <div class="flex -space-x-1">
+                                    <img src="https://i.pravatar.cc/150?u=30" class="w-5 h-5 rounded-full ring-1 ring-white">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <!-- Add Button -->
+                    <div class="p-2">
+                        <button class="w-full text-left text-slate-500 hover:bg-gray-200/50 hover:text-slate-700 p-2 rounded text-sm transition flex items-center gap-2 btn-show-add">
+                            <i class="fa-solid fa-plus"></i> Add a card
+                        </button>
+                    </div>
+                </div>
+
+                <!-- COLUMN: RESEARCH -->
+                <div class="w-[280px] flex flex-col max-h-full rounded-xl bg-[#f4f5f7]/95 backdrop-blur shadow-xl shrink-0 border border-white/60">
+                    <div class="p-3 pl-4 font-bold text-slate-700 text-sm flex justify-between items-center">
+                        <span>Research</span>
+                        <i class="fa-solid fa-ellipsis hover:bg-gray-200 p-1 rounded cursor-pointer transition"></i>
+                    </div>
+                    <div class="flex-1 overflow-y-auto px-2 pb-2 custom-scrollbar space-y-2 kanban-column" id="col-research">
+                        <div class="bg-white p-3 rounded-lg shadow-card border-b border-gray-100 cursor-grab hover:bg-blue-50/50 group draggable relative border border-transparent hover:border-blue-300 transition-all duration-200" draggable="true">
+                            <div class="flex gap-2 mb-2">
+                                <span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded">Checking</span>
+                            </div>
+                            <p class="text-sm font-semibold text-slate-800 mb-3">Check all internal URLs work in blog archive</p>
+                            <div class="flex items-center gap-2 text-xs text-slate-500 mb-2">
+                                <i class="fa-regular fa-clock"></i> Dec 23
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <div class="text-gray-400 text-xs flex gap-3">
+                                    <span><i class="fa-regular fa-comment"></i> 29</span>
+                                </div>
+                                <div class="flex -space-x-1">
+                                    <img src="https://i.pravatar.cc/150?u=12" class="w-5 h-5 rounded-full ring-1 ring-white">
+                                </div>
+                            </div>
+                        </div>
+
+                         <!-- Card with Podcast Image -->
+                         <div class="bg-white p-3 rounded-lg shadow-card border-b border-gray-100 cursor-grab hover:bg-blue-50/50 group draggable relative border border-transparent hover:border-blue-300 transition-all duration-200" draggable="true">
+                            <div class="flex gap-2 mb-2">
+                                <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded">Design</span>
+                            </div>
+                            <div class="h-24 bg-purple-50 rounded border border-purple-100 mb-2 flex items-center justify-center">
+                                <i class="fa-solid fa-podcast text-4xl text-purple-500"></i>
+                            </div>
+                            <p class="text-sm font-semibold text-slate-800 mb-2">Launch podcast</p>
+                             <div class="flex items-center gap-2 text-xs text-slate-500 mb-2">
+                                <i class="fa-regular fa-clock"></i> Dec 21
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <div class="text-gray-400 text-xs flex gap-3">
+                                    <span><i class="fa-regular fa-comment"></i> 12</span>
+                                </div>
+                                <div class="flex -space-x-1">
+                                    <img src="https://i.pravatar.cc/150?u=13" class="w-5 h-5 rounded-full ring-1 ring-white">
+                                    <img src="https://i.pravatar.cc/150?u=14" class="w-5 h-5 rounded-full ring-1 ring-white">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Meeting Card -->
+                        <div class="bg-white p-3 rounded-lg shadow-card border-b border-gray-100 cursor-grab hover:bg-blue-50/50 group draggable relative border border-transparent hover:border-blue-300 transition-all duration-200" draggable="true">
+                            <div class="flex gap-2 mb-2">
+                                <span class="bg-purple-100 text-purple-700 border border-purple-200 text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1"><i class="fa-solid fa-video"></i> Meeting</span>
+                            </div>
+                            <p class="text-sm font-semibold text-slate-800 mb-2">Weekly Sync with Stakeholders</p>
+                            <div class="flex justify-between items-center">
+                                <div class="text-gray-400 text-xs flex gap-3">
+                                    <span><i class="fa-regular fa-clock"></i> Tomorrow, 10 AM</span>
+                                </div>
+                                <div class="flex -space-x-1">
+                                    <img src="https://i.pravatar.cc/150?u=40" class="w-5 h-5 rounded-full ring-1 ring-white">
+                                    <img src="https://i.pravatar.cc/150?u=41" class="w-5 h-5 rounded-full ring-1 ring-white">
+                                    <div class="w-5 h-5 rounded-full bg-gray-100 text-[9px] flex items-center justify-center border border-white font-bold">+2</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-2">
+                        <button class="w-full text-left text-slate-500 hover:bg-gray-200/50 hover:text-slate-700 p-2 rounded text-sm transition flex items-center gap-2 btn-show-add">
+                            <i class="fa-solid fa-plus"></i> Add a card
+                        </button>
+                    </div>
+                </div>
+
+                <!-- COLUMN: IN PROGRESS -->
+                <div class="w-[280px] flex flex-col max-h-full rounded-xl bg-[#f4f5f7]/95 backdrop-blur shadow-xl shrink-0 border border-white/60">
+                    <div class="p-3 pl-4 font-bold text-slate-700 text-sm flex justify-between items-center">
+                        <span>In Progress</span>
+                        <i class="fa-solid fa-ellipsis hover:bg-gray-200 p-1 rounded cursor-pointer transition"></i>
+                    </div>
+                    <div class="flex-1 overflow-y-auto px-2 pb-2 custom-scrollbar space-y-2 kanban-column" id="col-inprogress">
+                         <div class="bg-white p-3 rounded-lg shadow-card border-b border-gray-100 cursor-grab hover:bg-blue-50/50 group draggable relative border border-transparent hover:border-blue-300 transition-all duration-200" draggable="true">
+                            <div class="flex gap-2 mb-2">
+                                <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded">Copywriting</span>
+                            </div>
+                            <!-- Medium Image -->
+                            <div class="h-24 bg-white rounded border border-gray-100 mb-2 flex items-center justify-center p-2">
+                                <i class="fa-brands fa-medium text-5xl text-black"></i>
+                            </div>
+                            <p class="text-sm font-semibold text-slate-800 mb-2">Prompt comments on blog posts</p>
+                             <div class="flex justify-between items-center">
+                                <div class="text-gray-400 text-xs flex gap-3">
+                                    <span><i class="fa-solid fa-camera"></i> 6/9</span>
+                                    <span><i class="fa-regular fa-comment"></i> 15</span>
+                                </div>
+                                <div class="flex -space-x-1">
+                                    <img src="https://i.pravatar.cc/150?u=19" class="w-5 h-5 rounded-full ring-1 ring-white">
+                                    <img src="https://i.pravatar.cc/150?u=20" class="w-5 h-5 rounded-full ring-1 ring-white">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white p-3 rounded-lg shadow-card border-b border-gray-100 cursor-grab hover:bg-blue-50/50 group draggable relative border border-transparent hover:border-blue-300 transition-all duration-200" draggable="true">
+                            <div class="flex gap-2 mb-2">
+                                <span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded">Dev</span>
+                            </div>
+                            <p class="text-sm font-semibold text-slate-800 mb-3">Backend logic for Authentication</p>
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-blue-500 w-2/3 rounded-full"></div>
+                                </div>
+                                <span class="text-[10px] text-slate-400 font-bold">65%</span>
+                            </div>
+                             <div class="flex justify-between items-center">
+                                <div class="flex -space-x-1">
+                                    <img src="https://i.pravatar.cc/150?u=22" class="w-5 h-5 rounded-full ring-1 ring-white">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-2">
+                        <button class="w-full text-left text-slate-500 hover:bg-gray-200/50 hover:text-slate-700 p-2 rounded text-sm transition flex items-center gap-2 btn-show-add">
+                            <i class="fa-solid fa-plus"></i> Add a card
+                        </button>
+                    </div>
+                </div>
+
+                <!-- COLUMN: REVIEW -->
+                <div class="w-[280px] flex flex-col max-h-full rounded-xl bg-[#f4f5f7]/95 backdrop-blur shadow-xl shrink-0 border border-white/60">
+                    <div class="p-3 pl-4 font-bold text-slate-700 text-sm flex justify-between items-center">
+                        <span>Review</span>
+                        <i class="fa-solid fa-ellipsis hover:bg-gray-200 p-1 rounded cursor-pointer transition"></i>
+                    </div>
+                    <div class="flex-1 overflow-y-auto px-2 pb-2 custom-scrollbar space-y-2 kanban-column" id="col-review">
+                        <div class="bg-white p-3 rounded-lg shadow-card border-b border-gray-100 cursor-grab hover:bg-blue-50/50 group draggable relative border border-transparent hover:border-blue-300 transition-all duration-200" draggable="true">
+                            <div class="flex gap-2 mb-2">
+                                <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded">Design</span>
+                            </div>
+                            <p class="text-sm font-semibold text-slate-800 mb-2">Snapchat Story on upcoming post</p>
+                            <div class="flex justify-between items-center">
+                                <div class="text-gray-400 text-xs flex gap-3">
+                                    <span><i class="fa-solid fa-paperclip"></i> 4</span>
+                                    <span><i class="fa-regular fa-comment"></i> 12</span>
+                                </div>
+                                <div class="flex -space-x-1">
+                                    <img src="https://i.pravatar.cc/150?u=17" class="w-5 h-5 rounded-full ring-1 ring-white">
+                                    <img src="https://i.pravatar.cc/150?u=18" class="w-5 h-5 rounded-full ring-1 ring-white">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-2">
+                        <button class="w-full text-left text-slate-500 hover:bg-gray-200/50 hover:text-slate-700 p-2 rounded text-sm transition flex items-center gap-2 btn-show-add">
+                            <i class="fa-solid fa-plus"></i> Add a card
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ADD LIST BTN -->
+                <div class="w-[280px] shrink-0">
+                    <button class="w-full bg-white/40 hover:bg-white/60 text-white font-bold p-3 rounded-xl transition flex items-center gap-2 backdrop-blur-md shadow-sm border border-white/40 text-sm">
+                        <i class="fa-solid fa-plus"></i> Add another list
                     </button>
                 </div>
             </div>
+        </main>
+    </div>
 
-            <!-- COLUMN: IN PROGRESS -->
-            <div class="w-[300px] flex-shrink-0 flex flex-col max-h-full glass-panel rounded-xl shadow-lg">
-                <div class="p-3 pl-4 flex items-center justify-between cursor-grab active:cursor-grabbing">
-                    <h2 class="font-bold text-slate-700 text-sm">In Progress</h2>
-                    <span class="card-count text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-bold">1</span>
+    <!-- 5. MACOS STYLE DOCK -->
+    <div class="absolute bottom-4 h-16 bg-white/30 backdrop-blur-xl border border-white/20 rounded-2xl px-4 flex items-center gap-4 shadow-dock z-50 transform hover:scale-105 transition duration-300">
+        <div class="w-10 h-10 bg-blue-500 rounded-xl shadow-lg dock-icon flex items-center justify-center text-white text-lg cursor-pointer"><i class="fa-solid fa-face-smile"></i></div>
+        <div class="w-10 h-10 bg-white rounded-xl shadow-lg dock-icon flex items-center justify-center cursor-pointer overflow-hidden"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/2048px-Instagram_icon.png" class="w-full h-full object-cover"></div>
+        <div class="w-10 h-10 bg-white rounded-xl shadow-lg dock-icon flex items-center justify-center cursor-pointer overflow-hidden"><img src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Mail_%28iOS%29.svg" class="w-full h-full object-cover"></div>
+        
+        <!-- TERMINAL ICON (TRIGGER) -->
+        <div onclick="openTerminal()" class="w-10 h-10 bg-gray-900 rounded-xl shadow-lg dock-icon flex items-center justify-center text-green-400 text-lg cursor-pointer border border-gray-700 hover:border-green-400 hover:shadow-neon transition-all">
+            <i class="fa-solid fa-terminal"></i>
+        </div>
+
+        <div class="w-[1px] h-8 bg-white/40 mx-1"></div>
+        <div class="w-10 h-10 bg-white rounded-full shadow-lg dock-icon flex items-center justify-center cursor-pointer border-2 border-white/50 overflow-hidden">
+            <i class="fa-solid fa-trash text-slate-500"></i>
+        </div>
+    </div>
+
+    <!-- === EASTER EGG: TERMINAL POPUP === -->
+    <div id="terminal-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div class="bg-[#0c0c0c] w-[600px] h-[350px] rounded-lg shadow-2xl border border-gray-800 flex flex-col overflow-hidden font-mono text-sm relative">
+            <!-- Terminal Header -->
+            <div class="bg-gray-800 px-4 py-2 flex items-center gap-2 border-b border-gray-700">
+                <div class="flex gap-2">
+                    <div class="w-3 h-3 rounded-full bg-red-500 cursor-pointer" onclick="closeTerminal()"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
                 </div>
-                <div class="flex-1 overflow-y-auto px-3 pb-2 custom-scrollbar space-y-3 kanban-column" id="col-progress">
-                    <div class="bg-white p-3 rounded-lg shadow-sm border border-slate-100 hover:border-blue-400 hover:shadow-md cursor-pointer transition group draggable" draggable="true">
-                        <div class="flex gap-2 mb-2"><span class="bg-orange-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded border border-orange-100">Dev</span></div>
-                        <p class="text-slate-800 text-sm font-medium leading-snug mb-2">Fix navigation bug on mobile</p>
-                        <div class="flex items-center gap-2 mb-3 text-red-500 text-xs font-semibold bg-red-50 px-2 py-0.5 rounded w-max"><i class="fa-regular fa-clock"></i> 2 Days left</div>
+                <div class="text-gray-400 ml-4 text-xs">matrix_sync@nezo-flow:~</div>
+            </div>
+            <!-- Terminal Body -->
+            <div class="p-4 text-green-400 flex-1 overflow-hidden" id="terminal-content">
+                <span class="text-gray-500">$ ./init_nezo.sh</span><br>
+                <span id="typed-text"></span><span class="animate-blink">_</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- === HIDDEN TEMPLATES & INPUTS === -->
+    
+    <!-- 1. ADD CARD FORM TEMPLATE -->
+    <div id="add-form-template" class="hidden">
+        <div class="add-card-form bg-white p-3 rounded-lg shadow-xl border border-blue-200 mt-2 flex flex-col gap-3 relative z-50 animate-[fadeIn_0.2s_ease-out]">
+            
+            <!-- Type Selection -->
+            <div class="flex gap-2">
+                <label class="flex-1 cursor-pointer">
+                    <input type="radio" name="card-type" value="task" class="peer hidden" checked>
+                    <div class="text-center text-[10px] font-bold py-1.5 rounded bg-slate-50 text-slate-500 peer-checked:bg-blue-100 peer-checked:text-blue-600 transition border border-transparent peer-checked:border-blue-200">
+                        <i class="fa-solid fa-check mr-1"></i> Task
                     </div>
-                </div>
-                <div class="p-3">
-                    <div class="add-card-form hidden flex-col gap-2 bg-white p-2 rounded-lg shadow-sm border border-blue-200">
-                        <div class="hidden mb-1 relative group image-preview-container"><img src="" class="w-full h-24 object-cover rounded-md"><button class="absolute top-1 right-1 bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs" onclick="removeTempImage(this)"><i class="fa-solid fa-times"></i></button></div>
-                        <textarea class="w-full text-sm resize-none outline-none text-slate-700" rows="2" placeholder="Enter a title..."></textarea>
-                        <div class="flex items-center justify-between mt-1">
-                            <div class="flex items-center gap-2">
-                                <button class="btn-confirm-add bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-semibold">Add Card</button>
-                                <button class="btn-cancel-add text-slate-500"><i class="fa-solid fa-xmark"></i></button>
-                            </div>
-                            <button class="btn-attach-image text-slate-400 hover:text-blue-500"><i class="fa-regular fa-image"></i></button>
-                        </div>
+                </label>
+                <label class="flex-1 cursor-pointer">
+                    <input type="radio" name="card-type" value="meeting" class="peer hidden">
+                    <div class="text-center text-[10px] font-bold py-1.5 rounded bg-slate-50 text-slate-500 peer-checked:bg-purple-100 peer-checked:text-purple-600 transition border border-transparent peer-checked:border-purple-200">
+                        <i class="fa-solid fa-video mr-1"></i> Meeting
                     </div>
-                    <button class="btn-show-add w-full flex items-center gap-2 text-slate-600 hover:bg-black/5 p-2 rounded-lg text-sm transition font-medium"><i class="fa-solid fa-plus"></i> Add a card</button>
-                </div>
+                </label>
             </div>
 
-            <!-- COLUMN: DONE -->
-            <div class="w-[300px] flex-shrink-0 flex flex-col max-h-full glass-panel rounded-xl shadow-lg">
-                <div class="p-3 pl-4 flex items-center justify-between cursor-grab active:cursor-grabbing">
-                    <h2 class="font-bold text-slate-700 text-sm">Done</h2>
-                    <span class="card-count text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-bold">1</span>
-                </div>
-                <div class="flex-1 overflow-y-auto px-3 pb-2 custom-scrollbar space-y-3 kanban-column" id="col-done">
-                    <div class="bg-white p-3 rounded-lg shadow-sm border border-slate-100 hover:border-blue-400 hover:shadow-md cursor-pointer transition group draggable" draggable="true">
-                        <div class="flex gap-2 mb-2"><span class="bg-green-50 text-green-600 text-[10px] font-bold px-2 py-0.5 rounded border border-green-100">QA</span></div>
-                        <p class="text-slate-800 text-sm font-medium leading-snug line-through text-slate-400">Monthly Report generated</p>
-                    </div>
-                </div>
-                 <div class="p-3">
-                    <div class="add-card-form hidden flex-col gap-2 bg-white p-2 rounded-lg shadow-sm border border-blue-200">
-                        <div class="hidden mb-1 relative group image-preview-container"><img src="" class="w-full h-24 object-cover rounded-md"><button class="absolute top-1 right-1 bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs" onclick="removeTempImage(this)"><i class="fa-solid fa-times"></i></button></div>
-                        <textarea class="w-full text-sm resize-none outline-none text-slate-700" rows="2" placeholder="Enter a title..."></textarea>
-                        <div class="flex items-center justify-between mt-1">
-                            <div class="flex items-center gap-2">
-                                <button class="btn-confirm-add bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-semibold">Add Card</button>
-                                <button class="btn-cancel-add text-slate-500"><i class="fa-solid fa-xmark"></i></button>
-                            </div>
-                            <button class="btn-attach-image text-slate-400 hover:text-blue-500"><i class="fa-regular fa-image"></i></button>
-                        </div>
-                    </div>
-                    <button class="btn-show-add w-full flex items-center gap-2 text-slate-600 hover:bg-black/5 p-2 rounded-lg text-sm transition font-medium"><i class="fa-solid fa-plus"></i> Add a card</button>
-                </div>
-            </div>
-
-             <!-- ADD LIST BTN -->
-             <div class="w-[300px] flex-shrink-0">
-                <button class="w-full bg-white/30 hover:bg-white/50 text-slate-700 font-semibold p-3 rounded-xl transition flex items-center gap-2 border border-white/40 shadow-sm text-sm">
-                    <i class="fa-solid fa-plus"></i> Add another list
+            <!-- Image Preview Area -->
+            <div class="hidden relative image-preview rounded border border-gray-200 overflow-hidden bg-gray-50 h-24 flex items-center justify-center group">
+                <img src="" class="h-full object-contain">
+                <button type="button" class="absolute top-1 right-1 bg-black/50 hover:bg-black text-white rounded-full w-5 h-5 flex items-center justify-center text-xs backdrop-blur-sm transition" onclick="removeImage(this)">
+                    <i class="fa-solid fa-xmark"></i>
                 </button>
-             </div>
-
-        </div>
-    </main>
-
-    <!-- MODALS (Hidden by default) -->
-    <!-- Generic Modal -->
-    <div id="app-modal" class="fixed inset-0 z-[100] hidden items-center justify-center modal-backdrop p-4">
-        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl transform transition-all scale-95 opacity-0 modal-content overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                <h3 id="modal-title" class="font-bold text-lg text-slate-800">Settings</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark fa-lg"></i></button>
             </div>
-            <div id="modal-body" class="p-6 text-slate-600 text-sm leading-relaxed">
-                <!-- Content injected via JS -->
+
+            <!-- Text Input -->
+            <textarea class="w-full text-sm resize-none outline-none text-slate-700 placeholder:text-slate-400 min-h-[60px] p-2 bg-slate-50 rounded focus:bg-white focus:ring-2 focus:ring-blue-100 transition border border-transparent focus:border-blue-200" placeholder="What needs to be done?"></textarea>
+            
+            <!-- Role Tags -->
+            <div class="flex gap-2 overflow-x-auto py-1 scrollbar-hide">
+                <label class="cursor-pointer shrink-0">
+                    <input type="radio" name="role-select" value="Design|bg-green-100 text-green-700" class="peer hidden">
+                    <span class="block px-2 py-0.5 rounded text-[10px] font-bold bg-slate-50 text-slate-400 border border-slate-100 peer-checked:bg-green-100 peer-checked:text-green-700 peer-checked:border-green-200 transition hover:bg-slate-100">Design</span>
+                </label>
+                <label class="cursor-pointer shrink-0">
+                    <input type="radio" name="role-select" value="Dev|bg-purple-100 text-purple-700" class="peer hidden">
+                    <span class="block px-2 py-0.5 rounded text-[10px] font-bold bg-slate-50 text-slate-400 border border-slate-100 peer-checked:bg-purple-100 peer-checked:text-purple-700 peer-checked:border-purple-200 transition hover:bg-slate-100">Dev</span>
+                </label>
+                <label class="cursor-pointer shrink-0">
+                    <input type="radio" name="role-select" value="Urgent|bg-red-100 text-red-700" class="peer hidden">
+                    <span class="block px-2 py-0.5 rounded text-[10px] font-bold bg-slate-50 text-slate-400 border border-slate-100 peer-checked:bg-red-100 peer-checked:text-red-700 peer-checked:border-red-200 transition hover:bg-slate-100">Urgent</span>
+                </label>
             </div>
-            <div class="bg-gray-50 px-6 py-3 flex justify-end">
-                <button onclick="closeModal()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-300 transition">Close</button>
+
+            <!-- Actions -->
+            <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                <div class="flex items-center gap-2">
+                    <button class="btn-add bg-blue-600 text-white px-4 py-1.5 rounded text-xs font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-500/30">Add</button>
+                    <button class="btn-cancel text-slate-400 hover:text-slate-600 px-2 transition"><i class="fa-solid fa-xmark fa-lg"></i></button>
+                </div>
+                <button class="text-slate-400 hover:text-blue-600 p-1.5 rounded hover:bg-blue-50 transition btn-attach" title="Attach Image">
+                    <i class="fa-regular fa-image fa-lg"></i>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Create Workspace Modal -->
-     <div id="workspace-modal" class="fixed inset-0 z-[100] hidden items-center justify-center modal-backdrop p-4">
-        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6">
-            <h3 class="font-bold text-lg text-slate-800 mb-4">New Workspace</h3>
-            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Workspace Name</label>
-            <input type="text" id="new-workspace-name" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-4" placeholder="e.g. Marketing Team">
-            <div class="flex justify-end gap-2">
-                <button onclick="document.getElementById('workspace-modal').classList.add('hidden')" class="px-4 py-2 text-slate-500 text-sm font-medium hover:bg-gray-100 rounded-lg">Cancel</button>
-                <button id="btn-save-workspace" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 shadow-lg shadow-blue-500/30">Create</button>
-            </div>
-        </div>
-    </div>
+    <!-- 2. HIDDEN FILE INPUTS -->
+    <input type="file" id="card-file-input" class="hidden" accept="image/*">
+    <input type="file" id="profile-file-input" class="hidden" accept="image/*">
 
     <script>
-        // Global State for current image upload
-        let currentImageBase64 = null;
-        let activeAddCardForm = null;
+        // --- LOGIC ---
+        let currentAddForm = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             initDragAndDrop();
-            setupDropdowns();
-            setupAddCardLogic();
-            setupProfileImageUpload();
-            setupMenuModals();
-            setupWorkspaceLogic();
+            initAddButtons();
+            setupFileHandling();
+            setupProfileHandling();
         });
 
-        /* --- DRAG & DROP ENGINE --- */
+        // --- 1. NAVBAR LOGIC ---
+        function setActiveTab(el) {
+            // Remove active class from all
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                item.classList.add('bg-white/20', 'text-white'); // Reset style
+                item.classList.remove('text-blue-900', 'bg-white/90');
+                
+                // Reset icon color
+                const icon = item.querySelector('i');
+                if(icon && !icon.classList.contains('text-yellow-400')) {
+                    icon.className = icon.className.replace('text-blue-600', 'text-white');
+                }
+            });
+
+            // Add active class to clicked
+            el.classList.add('active');
+            el.classList.remove('bg-white/20', 'text-white');
+            
+            // Set active icon color
+            const icon = el.querySelector('i');
+            if(icon && !icon.classList.contains('text-yellow-400')) {
+               icon.classList.add('text-blue-600');
+            }
+        }
+
+        // --- 2. PROFILE & SETTINGS LOGIC ---
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profile-menu');
+            menu.classList.toggle('show');
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.relative')) {
+                document.getElementById('profile-menu').classList.remove('show');
+            }
+        });
+
+        function triggerProfileUpload() {
+            document.getElementById('profile-file-input').click();
+        }
+
+        function setupProfileHandling() {
+            const profileInput = document.getElementById('profile-file-input');
+            
+            profileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // Update ALL user avatars in the app
+                        document.querySelectorAll('.user-avatar-global, .user-avatar-card, img[src*="pravatar"]').forEach(img => {
+                            img.src = e.target.result;
+                        });
+                        // Hide menu
+                        document.getElementById('profile-menu').classList.remove('show');
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        }
+
+        // --- 3. TERMINAL EASTER EGG LOGIC ---
+        let typeWriterTimeout;
+        
+        function openTerminal() {
+            const modal = document.getElementById('terminal-modal');
+            const textArea = document.getElementById('typed-text');
+            modal.classList.remove('hidden');
+            textArea.innerHTML = ""; // Clear previous
+            
+            const text = "Welcome To The Nezo Flow - By Matrix Sync Tech...";
+            let i = 0;
+            
+            function type() {
+                if (i < text.length) {
+                    textArea.innerHTML += text.charAt(i);
+                    i++;
+                    typeWriterTimeout = setTimeout(type, 50); // Typing speed
+                }
+            }
+            // Small delay before start
+            setTimeout(type, 500);
+        }
+
+        function closeTerminal() {
+            document.getElementById('terminal-modal').classList.add('hidden');
+            clearTimeout(typeWriterTimeout);
+        }
+
+
+        // --- 4. DRAG AND DROP & CARDS LOGIC (Standard) ---
         function initDragAndDrop() {
             const draggables = document.querySelectorAll('.draggable');
             const containers = document.querySelectorAll('.kanban-column');
@@ -331,7 +675,6 @@
                 });
                 draggable.addEventListener('dragend', () => {
                     draggable.classList.remove('dragging');
-                    updateCounts();
                 });
             });
 
@@ -340,10 +683,12 @@
                     e.preventDefault();
                     const afterElement = getDragAfterElement(container, e.clientY);
                     const draggable = document.querySelector('.dragging');
-                    if (afterElement == null) {
-                        container.appendChild(draggable);
-                    } else {
-                        container.insertBefore(draggable, afterElement);
+                    if (draggable) {
+                        if (afterElement == null) {
+                            container.appendChild(draggable);
+                        } else {
+                            container.insertBefore(draggable, afterElement);
+                        }
                     }
                 });
             });
@@ -362,274 +707,145 @@
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
-        function updateCounts() {
-            document.querySelectorAll('.kanban-column').forEach(col => {
-                const count = col.children.length;
-                const header = col.parentElement.querySelector('.card-count');
-                if (header) header.textContent = count;
+        // --- 5. ADD BUTTONS & FORM LOGIC (Enhanced) ---
+        function initAddButtons() {
+            const container = document.getElementById('board-container');
+            container.addEventListener('click', (e) => {
+                // Show Form
+                if (e.target.closest('.btn-show-add')) {
+                    const btn = e.target.closest('.btn-show-add');
+                    const columnFooter = btn.parentElement;
+                    btn.classList.add('hidden');
+                    
+                    // Clone Template
+                    const template = document.getElementById('add-form-template').firstElementChild.cloneNode(true);
+                    
+                    // Generate unique ID for radios to prevent conflicts
+                    const uniqueId = Date.now();
+                    template.querySelectorAll('input[name="role-select"]').forEach(input => input.name = `role-select-${uniqueId}`);
+                    template.querySelectorAll('input[name="card-type"]').forEach(input => input.name = `card-type-${uniqueId}`);
+                    
+                    columnFooter.appendChild(template);
+                    template.querySelector('textarea').focus();
+                    currentAddForm = template;
+                }
+                // Cancel Form
+                else if (e.target.closest('.btn-cancel')) {
+                    closeForm(e.target.closest('.add-card-form'));
+                }
+                // Attach Image
+                else if (e.target.closest('.btn-attach')) {
+                    currentAddForm = e.target.closest('.add-card-form');
+                    document.getElementById('card-file-input').click();
+                }
+                // Add Card
+                else if (e.target.closest('.btn-add')) {
+                    const form = e.target.closest('.add-card-form');
+                    const text = form.querySelector('textarea').value;
+                    
+                    // Get Image
+                    const imgPreview = form.querySelector('.image-preview img');
+                    const imgSrc = (!form.querySelector('.image-preview').classList.contains('hidden')) ? imgPreview.src : null;
+                    
+                    // Get Role
+                    const roleInput = form.querySelector('input[name^="role-select"]:checked');
+                    const roleVal = roleInput ? roleInput.value : null;
+
+                    // Get Type
+                    const typeInput = form.querySelector('input[name^="card-type"]:checked');
+                    const typeVal = typeInput ? typeInput.value : 'task';
+
+                    if (text.trim() || imgSrc) {
+                        addNewCard(form.closest('.w-\\[280px\\]').querySelector('.kanban-column'), text, imgSrc, roleVal, typeVal);
+                        closeForm(form);
+                    }
+                }
             });
         }
 
-        /* --- ADD CARD & IMAGE UPLOAD LOGIC --- */
-        function setupAddCardLogic() {
-            // Show/Hide Form
-            document.querySelectorAll('.btn-show-add').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const footer = e.target.closest('.p-3');
-                    footer.querySelector('.btn-show-add').classList.add('hidden');
-                    const form = footer.querySelector('.add-card-form');
-                    form.classList.remove('hidden');
-                    form.classList.add('flex');
-                    form.querySelector('textarea').focus();
-                    
-                    // Reset local state
-                    currentImageBase64 = null;
-                    const preview = form.querySelector('.image-preview-container') || form.querySelector('#image-preview-area');
-                    preview.classList.add('hidden');
-                    activeAddCardForm = form;
-                });
-            });
+        function closeForm(form) {
+            const footer = form.parentElement;
+            form.remove();
+            footer.querySelector('.btn-show-add').classList.remove('hidden');
+            currentAddForm = null;
+        }
 
-            // Cancel
-            document.querySelectorAll('.btn-cancel-add').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const footer = e.target.closest('.p-3');
-                    const form = footer.querySelector('.add-card-form');
-                    form.classList.add('hidden');
-                    form.classList.remove('flex');
-                    footer.querySelector('.btn-show-add').classList.remove('hidden');
-                    form.querySelector('textarea').value = '';
-                });
-            });
-
-            // Attach Image Click
-            document.querySelectorAll('.btn-attach-image').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    // Update active form reference so input change knows where to show preview
-                    activeAddCardForm = e.target.closest('.add-card-form');
-                    document.getElementById('card-image-input').click();
-                });
-            });
-
-            // Add Card Confirm
-            document.querySelectorAll('.btn-confirm-add').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const form = e.target.closest('.add-card-form');
-                    const textarea = form.querySelector('textarea');
-                    const text = textarea.value.trim();
-                    const column = form.closest('.glass-panel').querySelector('.kanban-column');
-                    
-                    // Allow adding if text exists OR image exists
-                    const previewImg = form.querySelector('img');
-                    const hasImage = !previewImg.parentElement.classList.contains('hidden') && previewImg.src;
-
-                    if (text || hasImage) {
-                        createCard(column, text, hasImage ? previewImg.src : null);
-                        
-                        // Reset form
-                        textarea.value = '';
-                        textarea.focus();
-                        form.querySelector('div.relative').classList.add('hidden'); // hide preview
-                        currentImageBase64 = null;
-                    }
-                });
-            });
-            
-            // Handle File Input Change for Card Image
-            document.getElementById('card-image-input').addEventListener('change', function(e) {
-                if (this.files && this.files[0]) {
+        function setupFileHandling() {
+            const fileInput = document.getElementById('card-file-input');
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files[0] && currentAddForm) {
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        if (activeAddCardForm) {
-                            const previewContainer = activeAddCardForm.querySelector('div.relative') || activeAddCardForm.querySelector('#image-preview-area');
-                            const img = previewContainer.querySelector('img');
-                            img.src = e.target.result;
-                            previewContainer.classList.remove('hidden');
-                        }
+                        const previewContainer = currentAddForm.querySelector('.image-preview');
+                        const img = previewContainer.querySelector('img');
+                        img.src = e.target.result;
+                        previewContainer.classList.remove('hidden');
+                        previewContainer.classList.add('flex');
                     }
                     reader.readAsDataURL(this.files[0]);
                 }
-                this.value = ''; // reset to allow selecting same file again
+                this.value = '';
             });
+
+            window.removeImage = function(btn) {
+                const container = btn.closest('.image-preview');
+                container.classList.add('hidden');
+                container.classList.remove('flex');
+                container.querySelector('img').src = '';
+            }
         }
 
-        function removeTempImage(btn) {
-            btn.parentElement.classList.add('hidden');
-            btn.parentElement.querySelector('img').src = '';
-        }
-        
-        // Expose to window for inline onclick
-        window.removeTempImage = removeTempImage;
+        function addNewCard(column, text, imageUrl, roleString, type) {
+            const card = document.createElement('div');
+            card.className = "bg-white p-3 rounded-lg shadow-card border-b border-gray-100 cursor-grab hover:bg-blue-50/50 group draggable relative border border-transparent hover:border-blue-300 transition-all duration-200 animate-[fadeIn_0.2s_ease-out]";
+            card.draggable = true;
 
-        function createCard(column, text, imageUrl) {
-            const newCard = document.createElement('div');
-            newCard.className = 'bg-white p-0 rounded-lg shadow-sm border border-slate-100 hover:border-blue-400 hover:shadow-md cursor-pointer transition group draggable overflow-hidden';
-            newCard.setAttribute('draggable', 'true');
+            // --- Badges & Roles HTML ---
+            let badgesHtml = '<div class="flex gap-2 mb-2">';
             
-            let html = '';
-            
+            // 1. Role Badge
+            if (roleString) {
+                const [roleName, roleClasses] = roleString.split('|');
+                badgesHtml += `<span class="${roleClasses} text-[10px] font-bold px-2 py-0.5 rounded">${roleName}</span>`;
+            }
+
+            // 2. Meeting Badge
+            if (type === 'meeting') {
+                badgesHtml += `<span class="bg-purple-100 text-purple-700 border border-purple-200 text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1"><i class="fa-solid fa-video"></i> Meeting</span>`;
+            }
+            badgesHtml += '</div>';
+
+            // --- Image HTML ---
+            let imageHtml = '';
             if (imageUrl) {
-                html += `<div class="h-32 bg-cover bg-center" style="background-image: url('${imageUrl}');"></div>`;
+                imageHtml = `
+                <div class="h-28 bg-white rounded border border-gray-100 mb-2 flex items-center justify-center relative overflow-hidden p-2">
+                    <img src="${imageUrl}" class="w-full h-full object-contain">
+                </div>`;
             }
-            
-            html += `<div class="p-3">`;
-            if (text) {
-                html += `<p class="text-slate-800 text-sm font-medium leading-snug mb-2">${text}</p>`;
-            }
-            html += `
-                <div class="flex items-center justify-between text-gray-400 text-xs mt-2">
-                     <div class="flex items-center gap-2 text-slate-400">
-                        <span class="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded">New</span>
+
+            // Get current global avatar
+            const currentAvatarSrc = document.getElementById('header-avatar').src;
+
+            card.innerHTML = `
+                ${badgesHtml}
+                ${imageHtml}
+                <p class="text-sm font-semibold text-slate-800 mb-2">${text}</p>
+                <div class="flex justify-between items-center">
+                    <div class="text-gray-400 text-xs flex gap-3">
+                        <span><i class="fa-regular fa-clock"></i> Now</span>
+                    </div>
+                    <div class="flex -space-x-1">
+                        <img src="${currentAvatarSrc}" class="w-5 h-5 rounded-full ring-1 ring-white user-avatar-global">
                     </div>
                 </div>
-            </div>`;
-
-            newCard.innerHTML = html;
-            column.appendChild(newCard);
+                <button class="absolute top-2 right-2 text-gray-400 hover:text-blue-600 hidden group-hover:block transition"><i class="fa-solid fa-pen text-xs"></i></button>
+            `;
             
-            // Re-init drag events for new element
-            const draggable = newCard;
-            draggable.addEventListener('dragstart', () => draggable.classList.add('dragging'));
-            draggable.addEventListener('dragend', () => {
-                draggable.classList.remove('dragging');
-                updateCounts();
-            });
-            updateCounts();
-        }
-
-        /* --- PROFILE IMAGE LOGIC --- */
-        function setupProfileImageUpload() {
-            const btnChangePhoto = document.getElementById('menu-change-photo');
-            const fileInput = document.getElementById('profile-upload-input');
-            const profileDisplay = document.getElementById('profile-img-display');
-            const profileInitials = document.getElementById('profile-initials');
-
-            btnChangePhoto.addEventListener('click', () => {
-                fileInput.click();
-            });
-
-            fileInput.addEventListener('change', function() {
-                if (this.files && this.files[0]) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        // Update Avatar
-                        profileDisplay.src = e.target.result;
-                        profileDisplay.classList.remove('hidden');
-                        profileInitials.classList.add('hidden');
-                        
-                        // Close dropdown
-                        document.getElementById('dropdown-profile').classList.remove('active');
-                        
-                        // Show Success Toast (simulated with modal for now)
-                        showModal('Success', 'Profile photo updated successfully!');
-                    }
-                    reader.readAsDataURL(this.files[0]);
-                }
-            });
-        }
-
-        /* --- MENU & WORKSPACE LOGIC --- */
-        function setupDropdowns() {
-            const btnWorkspaces = document.getElementById('btn-workspaces');
-            const menuWorkspaces = document.getElementById('dropdown-workspaces');
-            const btnProfile = document.getElementById('btn-profile');
-            const menuProfile = document.getElementById('dropdown-profile');
-
-            function toggle(menu) {
-                const isActive = menu.classList.contains('active');
-                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('active'));
-                if (!isActive) menu.classList.add('active');
-            }
-
-            btnWorkspaces.addEventListener('click', (e) => { e.stopPropagation(); toggle(menuWorkspaces); });
-            btnProfile.addEventListener('click', (e) => { e.stopPropagation(); toggle(menuProfile); });
-
-            document.addEventListener('click', () => {
-                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('active'));
-            });
-            document.querySelectorAll('.dropdown-menu').forEach(m => m.addEventListener('click', e => e.stopPropagation()));
-        }
-
-        function setupMenuModals() {
-            document.getElementById('menu-profile').addEventListener('click', () => {
-                showModal('Profile & Visibility', 'Manage who can see your profile and activity. <br><br><b>Visibility:</b> Public<br><b>Bio:</b> Project Manager at ZenithFlow');
-            });
-            document.getElementById('menu-activity').addEventListener('click', () => {
-                showModal('Activity Log', '<b>Today:</b><br>- Added "Fix Nav Bug" to In Progress<br>- Uploaded new cover image<br><br><b>Yesterday:</b><br>- Created "Marketing" Workspace');
-            });
-            document.getElementById('menu-settings').addEventListener('click', () => {
-                showModal('Settings', 'Application Preferences:<br><br>- <b>Theme:</b> Sky Blue (Active)<br>- <b>Notifications:</b> Enabled<br>- <b>Language:</b> English');
-            });
-        }
-
-        function setupWorkspaceLogic() {
-            const btnCreate = document.getElementById('btn-create-workspace');
-            const modal = document.getElementById('workspace-modal');
-            const btnSave = document.getElementById('btn-save-workspace');
-            const input = document.getElementById('new-workspace-name');
-            const list = document.getElementById('workspace-list');
-
-            btnCreate.addEventListener('click', () => {
-                document.getElementById('dropdown-workspaces').classList.remove('active');
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                input.focus();
-            });
-
-            btnSave.addEventListener('click', () => {
-                const name = input.value.trim();
-                if (name) {
-                    // Add new item to list
-                    const initial = name.charAt(0).toUpperCase();
-                    const newItem = document.createElement('div');
-                    newItem.className = 'p-2 hover:bg-blue-50 rounded-lg cursor-pointer flex items-center gap-3 group mt-1';
-                    newItem.innerHTML = `
-                        <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-xs">${initial}</div>
-                        <div>
-                            <div class="font-bold text-sm text-gray-800">${name}</div>
-                            <div class="text-xs text-gray-500">Private Workspace</div>
-                        </div>
-                    `;
-                    list.appendChild(newItem);
-                    
-                    // Reset and Close
-                    input.value = '';
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                    
-                    showModal('Workspace Created', `"${name}" has been successfully created!`);
-                }
-            });
-        }
-
-        /* --- MODAL UTILS --- */
-        function showModal(title, body) {
-            const modal = document.getElementById('app-modal');
-            const modalContent = modal.querySelector('.modal-content');
-            document.getElementById('modal-title').textContent = title;
-            document.getElementById('modal-body').innerHTML = body;
-            
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            
-            // Animation trigger
-            setTimeout(() => {
-                modalContent.classList.remove('scale-95', 'opacity-0');
-                modalContent.classList.add('scale-100', 'opacity-100');
-            }, 10);
-        }
-
-        window.closeModal = function() {
-            const modal = document.getElementById('app-modal');
-            const modalContent = modal.querySelector('.modal-content');
-            
-            modalContent.classList.remove('scale-100', 'opacity-100');
-            modalContent.classList.add('scale-95', 'opacity-0');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }, 200);
+            card.addEventListener('dragstart', () => card.classList.add('dragging'));
+            card.addEventListener('dragend', () => card.classList.remove('dragging'));
+            column.appendChild(card);
+            column.scrollTop = column.scrollHeight;
         }
     </script>
 </body>
